@@ -1,126 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
-    <title>AP Navigator</title>
-    <style>
-      body {
-        font-family: system-ui, sans-serif;
-        @media(prefers-color-scheme:dark) {
-          background-color: black;
-          color: white;
-        }
-        li {
-          text-decoration-line: underline;
-        }
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AP Navigator</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+
+      @media(prefers-color-scheme:dark) {
+        background-color: black;
+        color: white;
       }
-    </style>
-  </head>
-  <body>   
-    <header>
-      <h1>Acharya Prashant Books to Article Transformer</h1>        
-      <p>Explore books and open articles directly.</p>     
-    </header>
-    
-    <main>    
-      <noscript>Javascript is needed to function.</noscript>     
-    </main>
-     
-    <script>
-      const api = 'https://acharyaprashant.org/api/v2/content/';
-      const proxy = 'https://thingproxy.freeboard.io/fetch/';
-      const root = document.querySelector('main');
-      
-      root.innerHTML = 'Loading Content...';
-      root.addEventListener('click', (e) => {
-        const el = e.target;
-        const book = el.parentElement;
-        const isListItem = el.matches('li');
-        const isBookItem = book.matches('details');
-        const ol = book?.querySelector('ol');
-        const id = book?.dataset.id;
-      
-        // Fetch content
-        if (isBookItem && ol?.innerHTML === 'Loading Contents...') {
-          let list = '';
-          fetch(proxy + api + id + '?lf=0', {
-            method: 'GET',
-            headers: {
-              'X-Client-Type': 'web',
-            }
+
+      li {
+        text-decoration-line: underline;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Acharya Prashant Books to Article Transformer</h1>
+    <p>Explore books and open articles directly.</p>
+  </header>
+
+  <main>
+    <noscript>Javascript is needed to function.</noscript>
+  </main>
+
+  <script>
+    const api = 'https://acharyaprashant.org/api/v2/content/';
+    const proxy = 'https://thingproxy.freeboard.io/fetch/';
+    const root = document.querySelector('main');
+
+    root.innerHTML = 'Loading Content...';
+    root.addEventListener('click', (e) => {
+      const el = e.target;
+      const book = el.parentElement;
+      const isListItem = el.matches('li');
+      const isBookItem = book.matches('details');
+      const ol = book?.querySelector('ol');
+      const id = book?.dataset.id;
+
+      // Fetch content
+      if (isBookItem && ol?.innerHTML === 'Loading Contents...') {
+        let list = '';
+        fetch(proxy + api + id + '?lf=0', {
+          method: 'GET',
+          headers: {
+            'X-Client-Type': 'web',
+          }
+        })
+          .then(_ => _.json())
+          .then(_ => _.content.enumMask.subContents["1"].value.chapters)
+          .then(_ => {
+            _.forEach(v => {
+              list += `<li>${v.title}</li>`;
+            });
+            ol.innerHTML = list;
           })
-            .then(_ => _.json())
-            .then(_ => _.content.enumMask.value.subContents["1"].value.chapters)
-            .then(_ => {
-              _.forEach(v => {
-                list += `<li>${v.title}</li>`;
-              });
-              ol.innerHTML = list;
-            })
-            .catch(e => alert(e.message));
-        }
-      
-        // Fetch Article
-        if (isListItem) {
-      
-          fetch(proxy + api + 'search', {
-            method: 'POST',
-            headers: {
-              'X-Client-Type': 'web',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              q: el.textContent,
-              sft: false,
-              limitTypes: [1],
-              offset: '',
-              lf: 2,
-              limit: 5,
-              forceSearchTerm: false
-            })
+          .catch(e => alert(e.message));
+      }
+
+      // Fetch Article
+      if (isListItem) {
+
+        fetch(proxy + api + 'search', {
+          method: 'POST',
+          headers: {
+            'X-Client-Type': 'web',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            q: el.textContent,
+            sft: false,
+            limitTypes: [1],
+            offset: '',
+            lf: 2,
+            limit: 5,
+            forceSearchTerm: false
           })
-            .then(_ => _.json())
-            .then(_ => {
-              const host = 'https://acharyaprashant.org/en/articles/';
-              const link = _.searchedContents.data[0].meta.seoSlug;
-              open(host + link);
-            })
-            .catch(e => alert(e.message));
-        }
-      });
-      
-      
-      // Fetch books list
-      
-      const endpoint = 'index?contentType=6&lf=2&limit=400&offset=0';
-      let template = '';
-      fetch(proxy + api + endpoint, {
-        method: 'GET',
-        headers: {
-          'X-Client-Type': 'web',
-        }
-      })
-        .then(_ => _.json())
-        .then(_ => _.contents.data)
-        .then(_ => {
-      
-          _.forEach(v => {
-            if (!v.title.english) return;
-      
-            template += `
+        })
+          .then(_ => _.json())
+          .then(_ => {
+            const host = 'https://acharyaprashant.org/en/articles/';
+            const link = _.searchedContents.data[0].meta.seoSlug;
+            open(host + link);
+          })
+          .catch(e => alert(e.message));
+      }
+    });
+
+
+    // Fetch books list
+
+    const endpoint = 'index?contentType=6&lf=2&limit=400&offset=0';
+    let template = '';
+    fetch(proxy + api + endpoint, {
+      method: 'GET',
+      headers: {
+        'X-Client-Type': 'web',
+      }
+    })
+      .then(_ => _.json())
+      .then(_ => _.contents.data)
+      .then(_ => {
+
+        _.forEach(v => {
+          if (!v.title.english) return;
+
+          template += `
                   <details data-id=${v.id}>
                     <summary>${v.title.english}</summary>
                     <p>${v.description.english}</p>
                     <ol>Loading Contents...</ol>
                   </details>
                 `;
-          });
-      
-          root.innerHTML = template;
-        })
-        .catch((e) => alert(e.message));
-      
-    </script>
-  </body>
+        });
+
+        root.innerHTML = template;
+      })
+      .catch((e) => alert(e.message));
+
+  </script>
+</body>
+
 </html>
