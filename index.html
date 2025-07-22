@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple API Fetch</title>
+</head>
+<body>
+    <h1>Book Information</h1>
+    <div id="book-info">Loading book data...</div>
+
+    <h2>Chapters</h2>
+    <ul id="chapters-list">
+        </ul>
+
+    <script>
+        async function fetchBookAndChapters() {
+            const bookInfoDiv = document.getElementById('book-info');
+            const chaptersList = document.getElementById('chapters-list');
+
+            try {
+                // Fetch the book data
+                const response = await fetch('https://acharyaprashant.org/api/v2/content/bk-ego?lf=0', {
+                    headers: {
+                        'X-Client-Type': 'web'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const book = data.content;
+
+                // Display book title
+                if (book && book.title && book.title.english) {
+                    bookInfoDiv.textContent = 'Book Title: ' + book.title.english;
+                } else {
+                    bookInfoDiv.textContent = 'Book title not found.';
+                }
+
+                // Display chapters
+                const chapters = book.enumMask.value.subContents["1"].value.chapters;
+                if (chapters && chapters.length > 0) {
+                    chapters.forEach(chapter => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = chapter.title;
+                        chaptersList.appendChild(listItem);
+                    });
+                } else {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = 'No chapters found.';
+                    chaptersList.appendChild(listItem);
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                bookInfoDiv.textContent = 'Failed to load book or chapters: ' + error.message;
+            }
+        }
+
+        // Run the fetch function when the page loads
+        document.addEventListener('DOMContentLoaded', fetchBookAndChapters);
+    </script>
+</body>
+</html>
