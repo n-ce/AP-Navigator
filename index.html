@@ -1,148 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AP Content Tour Guide (Alpine.js - via corsproxy.io corrected)</title>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-        /* Minimal inline CSS for highlighting, since no external styles */
-        li.selected {
-            background-color: #e0e7ff; /* light indigo */
-            font-weight: bold;
-            color: #4c51bf; /* indigo */
-        }
-        details > summary {
-            cursor: pointer;
-        }
-    </style>
+   
+  <meta charset="UTF-8">
+   
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP Navigator</title>
+    <style>
+    body {
+      font-family: system-ui, sans-serif;
+
+      @media(prefers-color-scheme:dark) {
+        background-color: black;
+        color: white;
+      }
+
+      li {
+        text-decoration-line: underline;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <header>
-        <h1>Acharya Prashant Content Tour Guide</h1>
-        <p>Explore books and open articles directly.</p>
-    </header>
+    <header>
+        <h1>Acharya Prashant Books to Article Transformer</h1>
+        <p>Explore books and open articles directly.</p>
+      </header>
+    <main>
+        <noscript>Javascript is needed to function.</noscript>
+      </main>
+   
+  <script>
+    const api = 'https://acharyaprashant.org/api/v2/content/';
+    const proxy = 'https://thingproxy.freeboard.io/fetch/';
+    const root = document.querySelector('main');
 
-    <main x-data="app()" x-init="init()">
-        <p x-text="statusMessage" x-show="statusMessage"></p>
+    root.innerHTML = 'Loading Content...';
+    root.addEventListener('click', (e) => {
+      const el = e.target;
+      const book = el.parentElement;
+      const isListItem = el.matches('li');
+      const isBookItem = book.matches('details');
+      const ol = book?.querySelector('ol');
+      const id = book?.dataset.id;
 
-        <section>
-            <h2>Books</h2>
-            <div>
-                <template x-for="book in books" :key="book.id">
-                    <details @toggle="if($el.open && !book._chaptersLoaded) fetchChapters(book)">
-                        <summary x-text="book.title.english"></summary>
-                        <ul>
-                            <template x-for="chapter in book.chapters" :key="chapter.id">
-                                <li @click.stop="searchArticleAndOpen(chapter.title, $el)" :class="{ 'selected': selectedChapter === chapter.title }" x-text="chapter.title"></li>
-                            </template>
-                            <li x-show="!book.chapters || book.chapters.length === 0">No chapters found for this book.</li>
-                        </ul>
-                    </details>
-                </template>
-                <p x-show="!books.length && !statusMessage">No books available.</p>
-            </div>
-        </section>
-    </main>
+      // Fetch content
+      if (isBookItem && ol?.innerHTML === 'Loading Contents...') {
+        let list = '';
+        fetch(proxy + api + id + '?lf=0', {
+          method: 'GET',
+          headers: {
+            'X-Client-Type': 'web',
+          }
+        })
+          .then(_ => _.json())
+          .then(_ => _.content.enumMask.value.subContents["1"].value.chapters)
+          .then(_ => {
+            _.forEach(v => {
+              list += `
+                <li>${v.title}</li>
+              `;
+            });
 
-    <script>
-        // Alpine.js application logic
-        function app() {
-            return {
-                // Reactive data properties
-                books: [],
-                statusMessage: 'Loading content...',
-                selectedChapter: null, // To track the currently selected chapter for highlighting
+            ol.innerHTML = list;
 
-                // Initialization method
-                init() {
-                    this.fetchBooks();
-                },
+          })
+          .catch(e => alert(e.message));
+      }
 
-                // 1. Fetch Books
-                fetchBooks() {
-                    this.statusMessage = 'Loading books...';
-                    // Corrected: Use ?url= as the query parameter for corsproxy.io
-                    fetch('https://corsproxy.io/?url=https://acharyaprashant.org/api/v2/content/bk-ego?lf=0', {
-                        headers: {
-                            'X-Client-Type': 'web'
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        this.books = [data.content];
-                        if (this.books.length > 0) {
-                            this.books[0].chapters = [];
-                            this.books[0]._chaptersLoaded = false;
-                        }
-                        this.statusMessage = '';
-                    })
-                    .catch(error => {
-                        console.error('Failed to fetch books:', error);
-                        this.statusMessage = 'Error: Could not load books. Check CORS or network: ' + error.message;
-                    });
-                },
+      // Fetch Article
+      if (isListItem) {
 
-                // 2. Fetch/Load Chapters for a specific book's details element
-                fetchChapters(book) {
-                    if (!book._chaptersLoaded) {
-                        this.statusMessage = `Loading chapters for "${book.title.english}"...`;
-                        book.chapters = book.enumMask.value.subContents["1"].value.chapters;
-                        book._chaptersLoaded = true;
-                        this.statusMessage = '';
-                    }
-                },
+        fetch(proxy + api + 'search', {
+          method: 'POST',
+          headers: {
+            'X-Client-Type': 'web',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            q: el.textContent,
+            sft: false,
+            limitTypes: [1],
+            offset: '',
+            lf: 2,
+            limit: 5,
+            forceSearchTerm: false
+          })
+        })
+          .then(_ => _.json())
+          .then(_ => {
+            const host = 'https://acharyaprashant.org/en/articles/';
+            const link = _.searchedContents.data[0].meta.seoSlug;
+            open(host + link);
+          })
+          .catch(e => alert(e.message));
+      }
+    });
 
-                // 3. Search for Articles and Directly Open the First Result
-                searchArticleAndOpen(query, clickedElement) {
-                    this.statusMessage = `Searching for article related to "${query}"...`;
-                    this.selectedChapter = query;
 
-                    // Corrected: Use ?url= as the query parameter for corsproxy.io
-                    fetch('https://corsproxy.io/?url=https://acharyaprashant.org/api/v2/content/search', {
-                        method: 'POST',
-                        headers: {
-                            'X-Client-Type': 'web',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            q: query,
-                            sft: false,
-                            limitTypes: [1],
-                            offset: '',
-                            lf: 2,
-                            limit: 1,
-                            forceSearchTerm: false
-                        })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.searchedContents && data.searchedContents.data.length > 0) {
-                            const firstResult = data.searchedContents.data[0];
-                            const articleUrl = 'https://acharyaprashant.org/en/content/article/' + firstResult.meta.seoSlug;
-                            window.open(articleUrl, '_blank');
-                            this.statusMessage = `Opened: "${firstResult.meta.title.english || firstResult.meta.title.hindi}"`;
-                        } else {
-                            this.statusMessage = 'No article found for "' + query + '".';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Failed to search or open article:', error);
-                        this.statusMessage = 'Error: Could not search or open article: ' + error.message;
-                    });
-                }
-            };
-        }
-    </script>
+    // Fetch books list
+
+    const endpoint = 'index?contentType=6&lf=2&limit=400&offset=0';
+    let template = '';
+    fetch(proxy + api + endpoint, {
+      method: 'GET',
+      headers: {
+        'X-Client-Type': 'web',
+      }
+    })
+      .then(_ => _.json())
+      .then(_ => _.contents.data)
+      .then(_ => {
+
+        _.forEach(v => {
+          if (!v.title.english) return;
+
+          template += `
+            <details data-id=${v.id}>
+              <summary>${v.title.english}</summary>
+              <p>${v.description.english}</p>
+              <ol>Loading Contents...</ol>
+            </details>
+          `;
+        });
+
+        root.innerHTML = template;
+      })
+      .catch((e) => alert(e.message));
+
+  </script>
 </body>
+
 </html>
