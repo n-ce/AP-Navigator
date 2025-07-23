@@ -77,30 +77,31 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("books.json updated successfully!")
+	fmt.Println("book.json updated successfully!")
 }
 
 func runUpdater() error {
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	fmt.Printf("Fetching book list from %s...\n", booksIndexURL)
-	req, err := http.NewRequest("GET", booksIndexURL, nil)
+	// Use new variables for this specific request
+	reqBooks, err := http.NewRequest("GET", booksIndexURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request for book index: %w", err)
 	}
-	req.Header.Set("X-Client-Type", xClientTypeHeader)
-	resp, err := client.Do(req)
+	reqBooks.Header.Set("X-Client-Type", xClientTypeHeader)
+	respBooks, err := client.Do(reqBooks)
 	if err != nil {
 		return fmt.Errorf("failed to fetch book index: %w", err)
 	}
-	defer resp.Body.Close()
+	defer respBooks.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to fetch book index, status code: %d", resp.StatusCode)
+	if respBooks.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch book index, status code: %d", respBooks.StatusCode)
 	}
 
 	var apiIndexRes APIIndexResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiIndexRes); err != nil {
+	if err := json.NewDecoder(respBooks.Body).Decode(&apiIndexRes); err != nil {
 		return fmt.Errorf("failed to decode book index response: %w", err)
 	}
 
@@ -112,27 +113,29 @@ func runUpdater() error {
 		currentBookHasArticle := false
 		outputBookContentsTitles := []string{}
 
+		// Fetch chapters for the current book
 		bookContentsURL := fmt.Sprintf("%s/%s?lf=0", apiBaseURL, book.ID)
-		req, err = http.NewRequest("GET", bookContentsURL, nil)
+		// Use new variables for this specific request
+		reqChapters, err := http.NewRequest("GET", bookContentsURL, nil)
 		if err != nil {
 			fmt.Printf("  Failed to create request for book contents %s: %v\n", book.ID, err)
 			continue
 		}
-		req.Header.Set("X-Client-Type", xClientTypeHeader)
-		contentsResp, err := client.Do(req)
+		reqChapters.Header.Set("X-Client-Type", xClientTypeHeader)
+		respChapters, err := client.Do(reqChapters)
 		if err != nil {
 			fmt.Printf("  Failed to fetch contents for %s: %v\n", book.ID, err)
 			continue
 		}
-		defer contentsResp.Body.Close()
+		defer respChapters.Body.Close()
 
-		if contentsResp.StatusCode != http.StatusOK {
-			fmt.Printf("  Failed to fetch contents for %s, status code: %d\n", book.ID, contentsResp.StatusCode)
+		if respChapters.StatusCode != http.StatusOK {
+			fmt.Printf("  Failed to fetch contents for %s, status code: %d\n", book.ID, respChapters.StatusCode)
 			continue
 		}
 
 		var apiChapters APIChaptersResponse
-		if err := json.NewDecoder(contentsResp.Body).Decode(&apiChapters); err != nil {
+		if err := json.NewDecoder(respChapters.Body).Decode(&apiChapters); err != nil {
 			fmt.Printf("  Failed to decode chapters for %s: %v\n", book.ID, err)
 			continue
 		}
@@ -144,6 +147,7 @@ func runUpdater() error {
 			for chapterIdx, chapter := range chaptersData {
 				outputBookContentsTitles = append(outputBookContentsTitles, chapter.Title.English)
 
+				// Search for article presence using the first chapter's title
 				if chapterIdx == 0 {
 					fmt.Printf("  Searching for article presence for first chapter: %s\n", chapter.Title.English)
 
@@ -158,22 +162,23 @@ func runUpdater() error {
 					}
 					searchBody, _ := json.Marshal(searchPayload)
 
-					req, err = http.NewRequest("POST", searchAPIURL, bytes.NewBuffer(searchBody))
+					// Use new variables for this specific search request
+					reqSearch, err := http.NewRequest("POST", searchAPIURL, bytes.NewBuffer(searchBody))
 					if err != nil {
 						fmt.Printf("  Failed to create search request for %s: %v\n", chapter.Title.English, err)
 					} else {
-						req.Header.Set("X-Client-Type", xClientTypeHeader)
-						req.Header.Set("Content-Type", "application/json")
-						searchResp, err := client.Do(req)
+						reqSearch.Header.Set("X-Client-Type", xClientTypeHeader)
+						reqSearch.Header.Set("Content-Type", "application/json")
+						respSearch, err := client.Do(reqSearch)
 						if err != nil {
 							fmt.Printf("  Search request failed for %s: %v\n", chapter.Title.English, err)
 						} else {
-							defer searchResp.Body.Close()
-							if searchResp.StatusCode != http.StatusOK {
-								fmt.Printf("  Search failed for %s, status: %d\n", chapter.Title.English, searchResp.StatusCode)
+							defer respSearch.Body.Close()
+							if respSearch.StatusCode != http.StatusOK {
+								fmt.Printf("  Search failed for %s, status: %d\n", chapter.Title.English, respSearch.StatusCode)
 							} else {
 								var searchResults APISearchResponseWrapper
-								if err := json.NewDecoder(searchResp.Body).Decode(&searchResults); err != nil {
+								if err := json.NewDecoder(respSearch.Body).Decode(&searchResults); err != nil {
 									fmt.Printf("  Failed to decode search results for %s: %v\n", chapter.Title.English, err)
 								} else {
 									if len(searchResults.SearchedContents.Data) > 0 {
