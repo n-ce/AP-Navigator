@@ -1,6 +1,6 @@
 export async function GET(request) {
   const api = 'https://acharyaprashant.org/api/v2/content/';
-  const id = request.url.split('/').pop();
+  const { id } = request.query;
   const res = await fetch(
     api + 'search', {
     method: 'POST',
@@ -16,7 +16,7 @@ export async function GET(request) {
       lf: 2,
       limit: 5,
       forceSearchTerm: false
-    }),
+    })
   })
     .then(res => res.json())
     .then(data => {
