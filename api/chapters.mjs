@@ -1,12 +1,9 @@
 export async function GET(request) {
   const api = 'https://acharyaprashant.org/api/v2/content/';
-  const path = 'index?contentType=6&lf=2&limit=400&offset=0';
-  const res = await fetch(api + path)
+  const res = await fetch(api + req.query.id + '?lf=0')
     .then(res => res.json())
-    .then(data => data.contents.data.map(book => ({
-      id: book.id,
-      title: book.title?.english,
-      description: book.description?.english
+    .then(data => data.content.enumMask.subContents["1"].value.chapters.map(chapter => ({
+      title: chapter.title,
     })));
 
 
