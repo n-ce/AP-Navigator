@@ -27,7 +27,7 @@ const fetchFromApApi = async (endpoint, options = {}) => {
   return response.json();
 };
 
-export default async (req, res) => {
+export function GET(req, res) {
   const requestPath = req.url.split('?')[0];
   const { id } = req.query;
 
