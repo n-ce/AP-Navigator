@@ -41,9 +41,9 @@
       const ol = book?.querySelector('ol');
       const id = book?.dataset.id;
 
-      // Fetch chapters for a specific book
+      // Fetch chapters for a specific book 
       if (isBookItem && ol?.innerHTML === 'Loading Contents...') {
-        const response = await fetch(`/api/content/chapters?id=${id}`);
+        const response = await fetch(`/api/chapters?id=${id}`);
 
         if (!response.ok) {
           const errorDetails = await response.text();
@@ -55,9 +55,7 @@
 
         let list = '';
         chapters.forEach(v => {
-          list += `
-                        <li>${v.title}</li>
-                    `;
+          list += `<li>${v.title}</li>`;
         });
         ol.innerHTML = list;
       }
@@ -65,7 +63,7 @@
       // Fetch Article (search)
       if (isListItem) {
         const articleQueryId = encodeURIComponent(el.textContent);
-        const response = await fetch(`/api/content/article?id=${articleQueryId}`);
+        const response = await fetch(`/api/article?id=${articleQueryId}`);
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -73,11 +71,11 @@
           root.innerHTML = `<p style="color:red;">Error searching article: ${response.status}</p>`;
           return;
         }
-        const result = await response.json();
+        const url = await response.text();
 
-        if (result.articleUrl) {
-          open(result.articleUrl);
-        } else {
+        if (url)
+          open(url);
+        else {
           console.warn('No article found for this content.');
           root.innerHTML = `<p>No article found for "${el.textContent}".</p>`;
         }
@@ -86,7 +84,7 @@
 
 
     async function fetchBooks() {
-      const response = await fetch(`/api/content/books`);
+      const response = await fetch(`/api/books`);
 
       if (!response.ok) {
         const errorDetails = await response.text();
