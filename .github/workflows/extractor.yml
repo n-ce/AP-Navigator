@@ -24,7 +24,7 @@ jobs:
         # This action sets up the Go programming language environment.
         uses: actions/setup-go@v5
         with:
-          go-version: 'latest' # Use a recent stable Go version
+          go-version: '1.24' # Use a recent stable Go version
 
       - name: Build Go updater
         # This step compiles your main.go file into an executable named 'book-updater'.
