@@ -13,8 +13,8 @@ export async function GET(request) {
       limitTypes: [1],
       offset: '',
       lf: 2,
-      limit: 5,
-      forceSearchTerm: true
+      limit: 1,
+      forceSearchTerm: false
     })
   })
     .then(res => res.json())
