@@ -1,11 +1,12 @@
 export async function GET(request) {
   const api = 'https://acharyaprashant.org/api/v2/content/';
+  const id = request.url.split('/').pop();
   const res = await fetch(
     api + 'search', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      q: request.queryid,
+      q: id,
       sft: false,
       limitTypes: [1],
       offset: '',

@@ -43,7 +43,7 @@
 
       // Fetch chapters for a specific book 
       if (isBookItem && ol?.innerHTML === 'Loading Contents...') {
-        const response = await fetch(`/api/chapters?id=${id}`);
+        const response = await fetch(`/api/chapters/${id}`);
 
         if (!response.ok) {
           const errorDetails = await response.text();
@@ -63,7 +63,7 @@
       // Fetch Article (search)
       if (isListItem) {
         const articleQueryId = encodeURIComponent(el.textContent);
-        const response = await fetch(`/api/article?id=${articleQueryId}`);
+        const response = await fetch(`/api/article/${articleQueryId}`);
 
         if (!response.ok) {
           const errorData = await response.json();
