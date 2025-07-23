@@ -13,7 +13,7 @@ import (
 const (
 	apiBaseURL        = "https://acharyaprashant.org/api/v2/content"
 	delayPerBook      = 60 * time.Second // 1 minute delay between processing each book
-	outputFilePath    = "book.json"
+	outputFilePath    = "books.json"
 	booksIndexURL     = apiBaseURL + "/index?contentType=6&lf=2&limit=400&offset=0"
 	searchAPIURL      = apiBaseURL + "/search"
 	xClientTypeHeader = "web"
@@ -77,7 +77,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("book.json updated successfully!")
+	fmt.Println("books.json updated successfully!")
 }
 
 func runUpdater() error {
