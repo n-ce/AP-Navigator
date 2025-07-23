@@ -1,8 +1,7 @@
 export async function GET(request) {
   const api = 'https://acharyaprashant.org/api/v2/content/';
   const id = new URL(request.url).searchParams.get('id');
-  const res = await fetch(
-    api + 'search', {
+  const res = await fetch(api + 'search', {
     method: 'POST',
     headers: {
       'X-Client-Type': 'web',
@@ -15,7 +14,7 @@ export async function GET(request) {
       offset: '',
       lf: 2,
       limit: 5,
-      forceSearchTerm: false
+      forceSearchTerm: true
     })
   })
     .then(res => res.json())
@@ -23,8 +22,7 @@ export async function GET(request) {
       const host = 'https://acharyaprashant.org/en/articles/';
       const seoSlug = data.searchedContents.data[0]?.meta?.seoSlug;
       return host + seoSlug;
-    })
-
+    });
 
   return new Response(res);
 }
