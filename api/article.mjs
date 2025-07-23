@@ -4,7 +4,10 @@ export async function GET(request) {
   const res = await fetch(
     api + 'search', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'X-Client-Type': 'web',
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify({
       q: id,
       sft: false,
