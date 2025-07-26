@@ -9,15 +9,15 @@
   <style>
     body {
       font-family: system-ui, sans-serif;
-
-      @media(prefers-color-scheme:dark) {
-        background-color: black;
-        color: white;
-      }
-
+      
       li {
         text-decoration-line: underline;
       }
+      
+      @media(prefers-color-scheme:dark) {
+        background-color: black;
+        color: white;
+      }  
     }
   </style>
 </head>
@@ -72,32 +72,33 @@
         if (url) open(url);
         else {
           console.warn('No article found for this content.');
-          root.innerHTML = `<p>No article found for "${el.textContent}".</p>`;
+          root.innerHTML = 'No article found for ' + el.textContent;
         }
       }
     });
 
-
-    async function fetchBooks() {
-      const response = await fetch(`/api/books`);
-
-      if (!response.ok) {
-        const errorDetails = await response.text();
-        console.error(`Failed to fetch books: ${response.status} ${errorDetails}`);
-        root.innerHTML = `<p style="color:red;">Error loading books: ${response.status}</p>`;
-        return;
-      }
-      const books = await response.json();
-      root.innerHTML = books.reduce((_, bk) => _ + `
-                    <details data-id=${v.id}>
-                        <summary>${v.title}</summary>
-                        <p>${v.description}</p>
-                        <ol>Loading Contents...</ol>
-                    </details>
-                `, '');
-    }
-
-    fetchBooks();
+    
+    fetch('/api/books')
+      .then(async res => {
+        if (res.ok) return res.json();
+        else {
+          const errorDetails = await response.text();
+          throw new Error(`Failed to fetch books: ${response.status} ${errorDetails}`);
+        }
+      })
+      .then(books => {
+        root.innerHTML = books.reduce((_, bk) => _ + `
+        <details data-id=${bk.id}>
+            <summary>${bk.title}</summary>
+            <p>${bk.description}</p>
+            <ol>Loading Contents...</ol>
+        </details>
+        `, '');
+      })
+      .catch(error => {
+        console.error(`Error loading books: ${error.message}`);
+        root.innerHTML = `<p style="color:red;">Error loading books: ${error.message}</p>`;
+      });
 
   </script>
 </body>
