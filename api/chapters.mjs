@@ -9,10 +9,7 @@ export async function GET(request) {
     }
   })
     .then(res => res.json())
-    .then(data => data.content.enumMask.subContents["1"].value.chapters.map(chapter => ({
-      title: chapter.title,
-    })));
-
+    .then(data => data.content.enumMask.subContents["1"].value.chapters.map(chapter => chapter.title));
 
   return new Response(
     JSON.stringify(res), {
