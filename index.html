@@ -53,12 +53,7 @@
           return;
         }
         const chapters = await response.json();
-
-        let list = '';
-        chapters.forEach(v => {
-          list += `<li>${v.title}</li>`;
-        });
-        ol.innerHTML = list;
+        ol.innerHTML = chapters.reduce((_, ch) => _ + `<li>${ch}</li>`, '');
       }
 
       // Fetch Article (search)
@@ -74,8 +69,7 @@
         }
         const url = await response.text();
 
-        if (url)
-          open(url);
+        if (url) open(url);
         else {
           console.warn('No article found for this content.');
           root.innerHTML = `<p>No article found for "${el.textContent}".</p>`;
@@ -94,20 +88,13 @@
         return;
       }
       const books = await response.json();
-
-      let template = '';
-      books.forEach(v => {
-        if (!v.title) return;
-
-        template += `
+      root.innerHTML = books.reduce((_, bk) => _ + `
                     <details data-id=${v.id}>
                         <summary>${v.title}</summary>
                         <p>${v.description}</p>
                         <ol>Loading Contents...</ol>
                     </details>
-                `;
-      });
-      root.innerHTML = template;
+                `, '');
     }
 
     fetchBooks();
